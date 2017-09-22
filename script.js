@@ -1,85 +1,32 @@
-let canvas = document.getElementById('lab01');
-const ctx = canvas.getContext('2d');
+function sobel(img) {
+    const canvas = document.getElementById('canvas'),
+        ctx = canvas.getContext('2d');
 
-const PARAMS = {
-    width: 200,
-    height: 200,
-    paintSize: 10
-};
+    canvas.width = img.width;
+    canvas.height = img.height;
 
-ctx.fillStyle = "#000000";
+    ctx.drawImage(img, 0, 0);
+    const imgData = ctx.getImageData(0, 0, img.width, img.height),
+        sobel = new Sobel(imgData),
+        sobelCanvas = document.getElementById('sobelCanvas');
 
-canvas.addEventListener('click', function (event) {
-    ctx.fillStyle = "#000000";
-
-    ctx.fillRect(event.offsetX, event.offsetY, PARAMS.paintSize, PARAMS.paintSize);
-});
-
-function saveTextAsFile() {
-
-    const img = ctx.getImageData(10, 10, PARAMS.width, PARAMS.height).data;
-    let text = '';
-
-    for (let i = 3; i < img.length; i += 4) {
-        console.log(img[i]);
-        text += img[i] ? '1' : '0';
-    }
-
-    const textFile = new Blob([text], {type: 'text/plain'});
-    const fileNameToSaveAs = "123";// document.getElementById("inputFileNameToSaveAs").value;
-
-    const downloadLink = document.createElement("a");
-    downloadLink.download = fileNameToSaveAs;
-    downloadLink.innerHTML = 'Download File';
-
-    if (window.webkitURL !== null) {
-        downloadLink.href = window.webkitURL.createObjectURL(textFile);
-    }
-    else {
-        downloadLink.href = window.URL.createObjectURL(textFile);
-        downloadLink.onclick = destroyClickedElement;
-        downloadLink.style.display = 'none';
-
-        document.body.appendChild(downloadLink);
-    }
-
-    downloadLink.click();
+    sobelCanvas.width = img.width;
+    sobelCanvas.height = img.height;
+    sobelCanvas.getContext('2d').putImageData(sobel.getResult(), 0, 0);
 }
 
-function destroyClickedElement(event) {
-    document.body.removeChild(event.target);
-}
+document.getElementById('fileToLoad').addEventListener('change', event => {
+    const reader = new FileReader();
 
+    reader.addEventListener('load', event => {
+        const img = new Image();
 
-document.getElementById('loadbutton').addEventListener('click', function () {
-    var fileToLoad = document.getElementById("fileToLoad").files[0];
+        img.addEventListener('load', () => {
+            sobel(img);
+        });
 
-    var fileReader = new FileReader();
+        img.src = event.target.result;
+    });
 
-    ctx.fillStyle = "#000000";
-
-    fileReader.onload = function (fileLoadedEvent) {
-        let x = 0, y = 0;
-        var textFromFileLoaded = fileLoadedEvent.target.result;
-        for (char in textFromFileLoaded) {
-            if (textFromFileLoaded[char] === '1') {
-                ctx.fillRect(10 + x, 10 + y, 1, 1);
-            }
-            else if (textFromFileLoaded[char] === '\n') {
-                x = 0;
-                y++;
-                continue;
-            }
-            if (x === PARAMS.width-1) {
-                x = 0;
-                y++;
-                continue;
-            }
-
-            x++;
-        }
-        document.getElementById("inputTextToSave").value = textFromFileLoaded;
-
-    };
-    fileReader.readAsText(fileToLoad, "UTF-8");
+    reader.readAsDataURL(event.target.files[0]);
 });
